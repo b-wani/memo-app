@@ -1,12 +1,19 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import dynamic from 'next/dynamic'
 import {
   Memo,
   MemoFormData,
   MEMO_CATEGORIES,
   DEFAULT_CATEGORIES,
 } from '@/types/memo'
+
+// MDEditor를 동적으로 import (SSR 이슈 방지)
+const MDEditor = dynamic(
+  () => import('@uiw/react-md-editor').then(mod => mod.default),
+  { ssr: false }
+)
 
 interface MemoFormProps {
   isOpen: boolean
@@ -174,22 +181,38 @@ export default function MemoForm({
                 htmlFor="content"
                 className="block text-sm font-medium text-gray-700 mb-2"
               >
-                내용 *
+                내용 * (마크다운 지원)
               </label>
-              <textarea
-                id="content"
-                value={formData.content}
-                onChange={e =>
-                  setFormData(prev => ({
-                    ...prev,
-                    content: e.target.value,
-                  }))
-                }
-                className="placeholder-gray-400 text-gray-400 w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors resize-none"
-                placeholder="메모 내용을 입력하세요"
-                rows={8}
-                required
-              />
+              <div className="border border-gray-300 rounded-lg overflow-hidden focus-within:ring-2 focus-within:ring-blue-500 focus-within:border-blue-500 transition-colors">
+                <MDEditor
+                  value={formData.content}
+                  onChange={value =>
+                    setFormData(prev => ({
+                      ...prev,
+                      content: value || '',
+                    }))
+                  }
+                  preview="edit"
+                  hideToolbar={false}
+                  visibleDragBar={false}
+                  textareaProps={{
+                    placeholder:
+                      '마크다운으로 메모 내용을 입력하세요...\n\n예시:\n# 제목\n## 부제목\n- 목록\n**굵은 글씨**\n*기울임*\n`코드`',
+                    style: {
+                      fontSize: 14,
+                      lineHeight: 1.5,
+                      fontFamily: '"Malgun Gothic", "맑은 고딕", sans-serif',
+                    },
+                    required: true,
+                  }}
+                  data-color-mode="light"
+                  height={300}
+                />
+              </div>
+              <p className="mt-1 text-sm text-gray-500">
+                💡 실시간 마크다운 프리뷰를 보려면 오른쪽 탭을 사용하세요.
+                편집과 프리뷰를 동시에 보려면 가운데 버튼을 클릭하세요.
+              </p>
             </div>
 
             {/* 태그 */}
